@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"example.com/console/console"
 	"example.com/console/console/markup"
 )
 
@@ -25,7 +24,8 @@ func init() {
 }
 
 func main() {
-	console.Clear()
+
+	// console.Clear()
 	output := markup.Parse(input)
-	fmt.Printf("%v", output)
+	fmt.Printf("%v\n", output)
 }
