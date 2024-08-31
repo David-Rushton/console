@@ -47,27 +47,54 @@ func tokenise(markup string) iter.Seq[token] {
 			yield(token{tokenType, value})
 		}
 
-		for _, r := range markup {
+		// Some tags can contain spaces, and other characters, that we would normally yield on.
+		var buildingTag = false
+		var skipNext = false
+
+		for i, r := range markup {
+
+			// Current rune is part of escape.
+			// It has already been processed.
+			if skipNext {
+				skipNext = false
+				continue
+			}
+
+			// Handle escapes.
+			if r == openTag || r == closeTag {
+				if i+1 < len(markup) {
+					next := rune(markup[i+1])
+					if r == next && next == openTag || next == closeTag {
+						buffer = append(buffer, r)
+						skipNext = true
+						continue
+					}
+				}
+			}
+
 			switch r {
-			// Opening tags always start a new buffer, to simplify parsing.
 			case openTag:
 				flush()
+				buildingTag = true
 				buffer = append(buffer, r)
 
-			// Closing tags always end a buffer, as this simplifies parsing.
 			case closeTag:
 				buffer = append(buffer, r)
+				buildingTag = false
 				flush()
 
-			// Always flush on these whitespace.
-			// Tokens that exclusively contain whitespace simplifies parsing.
 			case space, '\t', '\r', '\n':
-				flush()
-				yield(token{whitespace, string(r)})
+				if !buildingTag {
+					flush()
+					yield(token{whitespace, string(r)})
+				} else {
+					buffer = append(buffer, r)
+				}
 
 			default:
 				buffer = append(buffer, r)
 			}
+
 		}
 
 		// Make sure the buffer is empty before we exit.

@@ -99,7 +99,7 @@ func parseTag(token token) (value string, ok bool) {
 			// https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
 			// \e]8;;http://example.com\e\\This is a link\e]8;;\e\\\n
 			// $"{ESC}]8;id={linkId};{link}{ESC}\\{ansi}{ESC}]8;;{ESC}\\";
-			return fmt.Sprintf("\x1b]8;id=%v;%v\x1b\\%v\x1b]8;;\x1b\\", elements[2], elements[2], elements[1]), true
+			return fmt.Sprintf("\x1b]8;id=%v;%v\x1b\\%v\x1b]8;;\x1b\\", elements[1], elements[1], elements[2]), true
 		}
 	}
 
