@@ -149,7 +149,7 @@ func runInRawMode(command string) (result string, err error) {
 	}
 
 	var buffer [16]byte
-	n, err := os.Stdout.Read(buffer[:])
+	n, err := os.Stdin.Read(buffer[:])
 	if err != nil {
 		return "", err
 	}
