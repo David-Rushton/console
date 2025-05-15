@@ -13,6 +13,7 @@ package console
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"golang.org/x/term"
 )
@@ -130,29 +131,32 @@ func GetSize() (columns, rows int, err error) {
 }
 
 func runInRawMode(command string) (result string, err error) {
-	// Raw mode allows to run commands in the terminal, without printing to screen.
-	fd := int(os.Stdin.Fd())
-	previousState, err := term.MakeRaw(fd)
+	// Raw mode executes commands in the terminal:
+	//  - Disables echoing
+	//  - Disables line buffering
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-	defer func() {
-		if err = term.Restore(fd, previousState); err != nil {
-			// The terminal is now in an unknown and unstable state.
-			panic(err)
-		}
-	}()
-
+	// Write to the terminal.
 	if _, err = os.Stdout.WriteString(command); err != nil {
 		return "", err
 	}
 
-	var buffer [16]byte
-	n, err := os.Stdin.Read(buffer[:])
-	if err != nil {
-		return "", err
-	}
+	// Read the response.
+	// We need to handle the case where the response never arrives.
+	select {
+	case <-time.After(time.Millisecond * 200):
+		return "", fmt.Errorf("standard in timed out")
+	default:
+		var buf [256]byte
+		n, err := os.Stdin.Read(buf[:])
+		if err != nil {
+			return "", err
+		}
 
-	return string(buffer[:n]), nil
+		return string(buf[:n]), nil
+	}
 }
