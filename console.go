@@ -147,16 +147,24 @@ func runInRawMode(command string) (result string, err error) {
 
 	// Read the response.
 	// We need to handle the case where the response never arrives.
-	select {
-	case <-time.After(time.Millisecond * 200):
-		return "", fmt.Errorf("standard in timed out")
-	default:
+	var done = make(chan string, 1)
+	var fail = make(chan error, 1)
+	go func() {
 		var buf [256]byte
 		n, err := os.Stdin.Read(buf[:])
 		if err != nil {
-			return "", err
+			fail <- err
 		}
 
-		return string(buf[:n]), nil
+		done <- string(buf[:n])
+	}()
+
+	select {
+	case <-time.After(time.Millisecond * 200):
+		return "", fmt.Errorf("standard in timed out")
+	case failErr := <-fail:
+		return "", failErr
+	case message := <-done:
+		return message, nil
 	}
 }
