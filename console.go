@@ -126,8 +126,9 @@ func SetCursorPosition(column, row uint) {
 }
 
 // Returns the visible size of the terminal.
-func GetSize() (columns, rows int, err error) {
-	return term.GetSize(int(os.Stdout.Fd()))
+func GetSize() (columns, rows uint, err error) {
+	c, r, e := term.GetSize(int(os.Stdout.Fd()))
+	return uint(c), uint(r), e
 }
 
 func runInRawMode(command string) (result string, err error) {
